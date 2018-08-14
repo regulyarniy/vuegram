@@ -7,6 +7,7 @@
       <p>Welcome to the <a href="https://savvyapps.com/" target="_blank">Savvy Apps</a> sample social media web app powered by Vue.js and Firebase. Build this project by checking out The Definitive Guide to Getting Started with Vue.js</p>
     </div>
     <div class="col2">
+      <!-- login form -->
       <form @submit.prevent>
         <h1>Welcome Back</h1>
         <label for="email1">Email</label>
@@ -17,6 +18,22 @@
         <div class="extras">
           <a>Forgot Password</a>
           <a>Create an Account</a>
+        </div>
+      </form>
+      <!-- singup form -->
+      <form @submit.prevent>
+        <h1>Get Started</h1>
+        <label for="name">Name</label>
+        <input v-model.trim="signupForm.name" type="text" placeholder="Savvy Apps" id="name" />
+        <label for="title">Title</label>
+        <input v-model.trim="signupForm.title" type="text" placeholder="Company" id="title" />
+        <label for="email2">Email</label>
+        <input v-model.trim="signupForm.email" type="text" placeholder="you@email.com" id="email2" />
+        <label for="password2">Password</label>
+        <input v-model.trim="signupForm.password" type="password" placeholder="min 6 characters" id="password2" />
+        <button @click="signup" class="button">Sign Up</button>
+        <div class="extras">
+          <a>Back to Log In</a>
         </div>
       </form>
     </div>
@@ -34,6 +51,12 @@ export default {
         email: '',
         password: ''
       },
+      signupForm: {
+        name: '',
+        title: '',
+        email: '',
+        password: ''
+      }
     }
   },
   methods: {
@@ -44,6 +67,24 @@ export default {
         this.$router.push('/dashboard')
       }).catch(err => {
         console.log(err)
+      })
+    },
+    signup() {
+      fb.auth.createUserWithEmailAndPassword(this.signupForm.email, this.signupForm.password).then(user => {
+        this.$store.commit('setCurrentUser', user)
+        // create user obj
+        fb.usersCollection.doc(user.uid).set({
+          name: this.signupForm.name,
+          title: this.signupForm.title
+        }).then(() => ({
+          name: this.signupForm.name,
+          title: this.signupForm.title
+        })).then(() => {
+          this.$store.dispatch('fetchUserProfile')
+          this.$router.push('/dashboard')
+        }).catch(err => {
+          console.log(err)
+        })
       })
     }
   }
