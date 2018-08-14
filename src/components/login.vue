@@ -1,12 +1,17 @@
 <template>
 <div id="login">
+  <transition name="fade">
+    <div v-if="performingRequest" class="loading">
+      <p>Loading...</p>
+    </div>
+  </transition>
 
   <section>
     <div class="col1">
       <h1>Vuegram</h1>
       <p>Welcome to the <a href="https://savvyapps.com/" target="_blank">Savvy Apps</a> sample social media web app powered by Vue.js and Firebase. Build this project by checking out The Definitive Guide to Getting Started with Vue.js</p>
     </div>
-    <div class="col2">
+    <div class="col2" :class="{ 'signup-form': !showLoginForm }">
       <!-- login form -->
       <form v-if="showLoginForm" @submit.prevent>
         <h1>Welcome Back</h1>
@@ -36,6 +41,11 @@
           <a @click="toggleForm">Back to Log In</a>
         </div>
       </form>
+      <transition name="fade">
+        <div v-if="errorMsg !== ''" class="error-msg">
+          <p>{{ errorMsg }}</p>
+        </div>
+      </transition>
     </div>
   </section>
 </div>
@@ -57,37 +67,47 @@ export default {
         email: '',
         password: ''
       },
-      showLoginForm: true
+      showLoginForm: true,
+      performingRequest: false,
+      errorMsg: ''
     }
   },
   methods: {
     toggleForm() {
+      this.errorMsg = ''
       this.showLoginForm = !this.showLoginForm
     },
     login() {
+      this.performingRequest = true
+
       fb.auth.signInWithEmailAndPassword(this.loginForm.email, this.loginForm.password).then(user => {
         this.$store.commit('setCurrentUser', user)
         this.$store.dispatch('fetchUserProfile')
+        this.performingRequest = false
         this.$router.push('/dashboard')
       }).catch(err => {
         console.log(err)
+        this.performingRequest = false
+        this.errorMsg = err.message
       })
     },
     signup() {
+      this.performingRequest = true
+
       fb.auth.createUserWithEmailAndPassword(this.signupForm.email, this.signupForm.password).then(user => {
         this.$store.commit('setCurrentUser', user)
         // create user obj
-        fb.usersCollection.doc(user.uid).set({
+        fb.usersCollection.doc(user.user.uid).set({
           name: this.signupForm.name,
           title: this.signupForm.title
-        }).then(() => ({
-          name: this.signupForm.name,
-          title: this.signupForm.title
-        })).then(() => {
+        }).then(() => {
           this.$store.dispatch('fetchUserProfile')
+          this.performingRequest = false
           this.$router.push('/dashboard')
         }).catch(err => {
           console.log(err)
+          this.performingRequest = false
+          this.errorMsg = err.message
         })
       })
     }
