@@ -11,7 +11,7 @@
       <h1>Vuegram</h1>
       <p>Welcome to the <a href="https://savvyapps.com/" target="_blank">Savvy Apps</a> sample social media web app powered by Vue.js and Firebase. Build this project by checking out The Definitive Guide to Getting Started with Vue.js</p>
     </div>
-    <div class="col2" :class="{ 'signup-form': !showLoginForm }">
+    <div class="col2" :class="{ 'signup-form': !showLoginForm && !showForgotPassword }">
       <!-- login form -->
       <form v-if="showLoginForm" @submit.prevent>
         <h1>Welcome Back</h1>
@@ -21,12 +21,12 @@
         <input v-model.trim="loginForm.password" type="password" placeholder="******" id="password1" />
         <button @click="login" class="button">Log In</button>
         <div class="extras">
-          <a>Forgot Password</a>
+          <a @click="togglePasswordReset">Forgot Password</a>
           <a @click="toggleForm">Create an Account</a>
         </div>
       </form>
       <!-- singup form -->
-      <form v-else @submit.prevent>
+      <form v-if="!showLoginForm && !showForgotPassword" @submit.prevent>
         <h1>Get Started</h1>
         <label for="name">Name</label>
         <input v-model.trim="signupForm.name" type="text" placeholder="Savvy Apps" id="name" />
@@ -39,6 +39,24 @@
         <button @click="signup" class="button">Sign Up</button>
         <div class="extras">
           <a @click="toggleForm">Back to Log In</a>
+        </div>
+      </form>
+      <!-- forgot password -->
+      <form v-if="showForgotPassword" @submit.prevent class="password-reset">
+        <div v-if="!passwordResetSuccess">
+          <h1>Reset Password</h1>
+          <p>We will send you an email to reset your password</p>
+          <label for="email3">Email</label>
+          <input v-model.trim="passwordForm.email" type="text" placeholder="you@email.com" id="email3" />
+          <button @click="resetPassword" class="button">Submit</button>
+          <div class="extras">
+            <a @click="togglePasswordReset">Back to Log In</a>
+          </div>
+        </div>
+        <div v-else>
+          <h1>Email Sent</h1>
+          <p>check your email for a link to reset your password</p>
+          <button @click="togglePasswordReset" class="button">Back to login</button>
         </div>
       </form>
       <transition name="fade">
@@ -67,8 +85,13 @@ export default {
         email: '',
         password: ''
       },
+      passwordForm: {
+        email: ''
+      },
       showLoginForm: true,
       performingRequest: false,
+      showForgotPassword: false,
+      passwordResetSuccess: false,
       errorMsg: ''
     }
   },
@@ -76,6 +99,16 @@ export default {
     toggleForm() {
       this.errorMsg = ''
       this.showLoginForm = !this.showLoginForm
+    },
+    togglePasswordReset() {
+      if (this.showForgotPassword) {
+        this.showLoginForm = true
+        this.showForgotPassword = false
+        this.passwordResetSuccess = false
+      } else {
+        this.showLoginForm = false
+        this.showForgotPassword = true
+      }
     },
     login() {
       this.performingRequest = true
@@ -109,6 +142,19 @@ export default {
           this.performingRequest = false
           this.errorMsg = err.message
         })
+      })
+    },
+    resetPassword() {
+      this.performingRequest = true
+
+      fb.auth.sendPasswordResetEmail(this.passwordForm.email).then(() => {
+        this.performingRequest = false
+        this.passwordResetSuccess = true
+        this.passwordForm.email = ''
+      }).catch(err => {
+        console.log(err)
+        this.performingRequest = false
+        this.errorMsg = err.message
       })
     }
   }
