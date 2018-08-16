@@ -16,7 +16,19 @@
       </div>
     </div>
     <div class="col2">
-      <div>
+      <div v-if="posts.length">
+        <div v-for="post in posts" class="post">
+          <h5>{{ post.userName }}</h5>
+          <span>{{ post.createdOn | formatDate }}</span>
+          <p>{{ post.content | trimLength }}</p>
+          <ul>
+            <li><a>comments {{ post.comments }}</a></li>
+            <li><a>likes {{ post.likes }}</a></li>
+            <li><a>view full post</a></li>
+          </ul>
+        </div>
+      </div>
+      <div v-else>
         <p class="no-results">There are currently no posts</p>
       </div>
     </div>
@@ -29,6 +41,7 @@
 import {
   mapState
 } from 'vuex'
+import moment from 'moment'
 const fb = require('../firebaseConfig.js')
 
 export default {
@@ -40,7 +53,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['userProfile', 'currentUser'])
+    ...mapState(['userProfile', 'currentUser', 'posts'])
   },
   methods: {
     createPost() {
@@ -56,6 +69,21 @@ export default {
       }).catch(err => {
         console.log(err)
       })
+    }
+  },
+  filters: {
+    formatDate(val) {
+      if (!val) {
+        return '-'
+      }
+      let date = val.toDate()
+      return moment(date).fromNow()
+    },
+    trimLength(val) {
+      if (val.length < 200) {
+        return val
+      }
+      return `${val.substring(0, 200)}...`
     }
   }
 }
