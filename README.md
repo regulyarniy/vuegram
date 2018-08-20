@@ -1,3 +1,5 @@
+[Live Demo](https://regulyarniy.github.io/vuegram/)
+
 # vuegram
 From tutorial: https://savvyapps.com/blog/definitive-guide-building-web-app-vuejs-firebase
 > A Vue.js project
