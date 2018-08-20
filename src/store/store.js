@@ -10,6 +10,11 @@ fb.auth.onAuthStateChanged(user => {
     store.commit('setCurrentUser', user)
     store.dispatch('fetchUserProfile')
 
+
+    fb.usersCollection.doc(user.uid).onSnapshot(doc => {
+      store.commit('setUserProfile', doc.data())
+    })
+
     // realtime updates from our posts collection
     fb.postsCollection.orderBy('createdOn', 'desc').onSnapshot(querySnapshot => {
       // check if created by currentUser
@@ -63,6 +68,37 @@ const store = new Vuex.Store({
       commit('setCurrentUser', null)
       commit('setUserProfile', {})
       commit('setPosts', null)
+    },
+    updateProfile({
+      commit,
+      state
+    }, data) {
+      let name = data.name
+      let title = data.title
+
+      fb.usersCollection.doc(state.currentUser.uid).update({
+        name,
+        title
+      }).then(user => {
+        // update all posts by user to reflect new name
+        fb.postsCollection.where('userId', '==', state.currentUser.uid).get().then(docs => {
+          docs.forEach(doc => {
+            fb.postsCollection.doc(doc.id).update({
+              userName: name
+            })
+          })
+        })
+        // update all comments by user to reflect new name
+        fb.commentsCollection.where('userId', '==', state.currentUser.uid).get().then(docs => {
+          docs.forEach(doc => {
+            fb.commentsCollection.doc(doc.id).update({
+              userName: name
+            })
+          })
+        })
+      }).catch(err => {
+        console.log(err)
+      })
     }
   },
   mutations: {
